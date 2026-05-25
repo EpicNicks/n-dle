@@ -1,0 +1,15 @@
+import { createBrowserRouter } from "react-router-dom";
+import { Layout } from "./Layout";
+import { WelcomePage } from "./pages/welcome-page/Welcome";
+import { GamePage } from "./pages/game-page/Game";
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      { index: true, element: <WelcomePage /> },
+      { path: "game/:wordHash", element: <GamePage /> },
+    ],
+  },
+]);

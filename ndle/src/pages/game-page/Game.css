@@ -1,0 +1,130 @@
+.game {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  min-height: calc(100vh - 4rem);
+  padding: 1rem;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ── Home button ── */
+.game__home {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #538d4e;
+  cursor: pointer;
+  padding: 0;
+}
+
+.game__home:hover {
+  text-decoration: underline;
+}
+
+/* ── Status banner ── */
+.game__banner {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.6rem 1.5rem;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.game__banner--won {
+  background-color: #538d4e;
+}
+.game__banner--lost {
+  background-color: #3a3a3c;
+}
+
+/* ── Board ── */
+.game__board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Keyboard ── */
+.game__keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.game__keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.game__key {
+  height: 58px;
+  min-width: 43px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background-color 0.1s,
+    color 0.1s;
+  user-select: none;
+}
+
+.game__key--wide {
+  min-width: 65px;
+  font-size: 0.75rem;
+}
+
+.game__key--untried,
+.game__key--empty,
+.game__key--filled {
+  background-color: #818384;
+  color: #fff;
+}
+
+.game__key--correct {
+  background-color: #538d4e;
+  color: #fff;
+}
+
+.game__key--present {
+  background-color: #b59f3b;
+  color: #fff;
+}
+
+.game__key--absent {
+  background-color: #3a3a3c;
+  color: #fff;
+}
+
+.game__key:hover {
+  filter: brightness(1.15);
+}
+
+.game__key:active {
+  filter: brightness(0.9);
+}
+
+.game__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  color: #787c7e;
+}
