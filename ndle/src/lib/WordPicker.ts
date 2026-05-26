@@ -10,6 +10,29 @@ const validateCache = {
   word: "" as string,
 };
 
+const headerRegex = /#(\d+),(\d+)/;
+
+export function minWordLength(): number {
+  return Number(words.match(headerRegex)?.at(1) ?? 0);
+}
+
+export function maxWordLength(): number {
+  const lastHash = words.lastIndexOf("#");
+  if (lastHash === -1) {
+    return 0;
+  }
+  const match = words.slice(lastHash).match(headerRegex);
+  return Number(match?.at(1) ?? 0);
+}
+
+const guessMap = new Map<number, number>(
+  [...words.matchAll(/#(\d+),(\d+)/g)].map((m) => [Number(m[1]), Number(m[2])]),
+);
+
+export function maxGuesses(letterCount: number): number {
+  return guessMap.get(letterCount) ?? 6;
+}
+
 function randomElement<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
@@ -36,7 +59,7 @@ export function validateWord(word: string): boolean {
   while ((match = lineRegex.exec(words)) !== null) {
     const line = match[0].trim();
 
-    if (line === endMarker) {
+    if (line.startsWith(endMarker)) {
       break;
     }
 
@@ -48,12 +71,19 @@ export function validateWord(word: string): boolean {
           return true;
         }
       }
-    } else if (line === startMarker) {
+    } else if (line.startsWith(startMarker)) {
       insideTargetSection = true;
     }
   }
 
   return false;
+}
+
+export function wordCountInListForLength(length: number): number {
+  if (wordCache.letterCount !== length) {
+    pickWord(length);
+  }
+  return wordCache.cache.length;
 }
 
 export function pickWord(letterCount: number): string {
@@ -73,7 +103,7 @@ export function pickWord(letterCount: number): string {
   while ((match = lineRegex.exec(words)) !== null) {
     const line = match[0].trim();
 
-    if (line === endMarker) {
+    if (line.startsWith(endMarker)) {
       break;
     }
 
@@ -81,7 +111,7 @@ export function pickWord(letterCount: number): string {
       if (line.length > 0) {
         candidates.push(line);
       }
-    } else if (line === startMarker) {
+    } else if (line.startsWith(startMarker)) {
       insideTargetSection = true;
     }
   }

@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { WordleRow, type LetterResult } from "../../components/tile/TileRow";
 import { ColorGuess } from "../../lib/GuessColorer";
 import { decodeWord } from "../../lib/WordHash";
-import { validateWord } from "../../lib/WordPicker";
+import * as WordPicker from "../../lib/WordPicker";
 import { WordDefinition } from "../../components/definition/Definition";
 import type { TileState } from "../../components/tile/Tile";
 import "./Game.css";
@@ -16,7 +16,6 @@ const KEYBOARD_ROWS = [
 
 type GameStatus = "playing" | "won" | "lost";
 
-/** Best state wins: correct > present > absent > untried */
 const STATE_PRIORITY: Record<TileState | "untried", number> = {
   correct: 3,
   present: 2,
@@ -26,20 +25,30 @@ const STATE_PRIORITY: Record<TileState | "untried", number> = {
   filled: 0,
 };
 
+const STATE_EMOJI: Record<TileState, string> = {
+  correct: "🟩",
+  present: "🟨",
+  absent: "⬛",
+  empty: "⬛",
+  filled: "⬛",
+};
+
 export function GamePage() {
   const { wordHash } = useParams<{ wordHash: string }>();
   const navigate = useNavigate();
   const word = useMemo(() => decodeWord(wordHash ?? ""), [wordHash]);
   const wordLength = word.length;
-  const maxGuesses = wordLength + 1;
+  const maxGuesses = WordPicker.maxGuesses(word.length);
 
   const [guesses, setGuesses] = useState<LetterResult[][]>([]);
   const [current, setCurrent] = useState<string>("");
   const [revealedRows, setRevealedRows] = useState<boolean[]>([]);
   const [shakingRow, setShakingRow] = useState<number | null>(null);
   const [status, setStatus] = useState<GameStatus>("playing");
+  const [copied, setCopied] = useState(false);
 
-  // Map each letter to its best known state for the keyboard
+  const copiedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const letterStates = useMemo(() => {
     const map = new Map<string, TileState>();
     guesses.forEach((row) => {
@@ -59,7 +68,7 @@ export function GamePage() {
       return;
     }
 
-    if (!validateWord(current)) {
+    if (!WordPicker.validateWord(current)) {
       setShakingRow(guesses.length);
       return;
     }
@@ -73,7 +82,6 @@ export function GamePage() {
     setGuesses(newGuesses);
     setCurrent("");
 
-    // Reveal after a short delay so tiles paint filled first
     setTimeout(() => {
       setRevealedRows((prev) => {
         const next = [...prev];
@@ -105,12 +113,27 @@ export function GamePage() {
     [status, current, wordLength, submitGuess],
   );
 
-  // Physical keyboard
   useEffect(() => {
     const handler = (e: KeyboardEvent) => handleKey(e.key.toUpperCase());
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [handleKey]);
+
+  function handleShare() {
+    const guessCount = status === "won" ? guesses.length : "X";
+    const grid = guesses
+      .map((row) => row.map(({ state }) => STATE_EMOJI[state]).join(""))
+      .join("\n");
+    const text = `NDLE ${guessCount}/${maxGuesses}\n\n${grid}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      if (copiedTimeout.current) {
+        clearTimeout(copiedTimeout.current);
+      }
+      setCopied(true);
+      copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   if (!word) {
     return <div className="game__error">Invalid game link.</div>;
@@ -118,7 +141,6 @@ export function GamePage() {
 
   const gameOver = status === "won" || status === "lost";
 
-  // Build the full board: past guesses + current row + empty rows
   const board: { tiles: LetterResult[]; rowIndex: number }[] = [];
 
   for (let i = 0; i < maxGuesses; i++) {
@@ -162,35 +184,56 @@ export function GamePage() {
         ))}
       </div>
 
+      {gameOver && (
+        <button className="game__share" onClick={handleShare}>
+          <div className="game__share-inner">
+            {copied ? "Copied!" : "Share"}
+            <svg
+              id="Footer-module_shareIcon__vrqx3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              height="20"
+              viewBox="0 0 24 24"
+              width="20"
+              data-testid="icon-share"
+            >
+              <path
+                fill="white"
+                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"
+              ></path>
+            </svg>
+          </div>
+        </button>
+      )}
+
       {gameOver && <WordDefinition word={word} />}
 
-      {!gameOver && (
-        <div className="game__keyboard">
-          {KEYBOARD_ROWS.map((row, ri) => (
-            <div key={ri} className="game__keyboard-row">
-              {row.map((key) => {
-                const state = letterStates.get(key) ?? "untried";
-                return (
-                  <button
-                    key={key}
-                    className={[
-                      "game__key",
-                      key === "ENTER" || key === "⌫" ? "game__key--wide" : "",
-                      `game__key--${state}`,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={() => handleKey(key)}
-                    aria-label={key === "⌫" ? "backspace" : key}
-                  >
-                    {key}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="game__keyboard">
+        {KEYBOARD_ROWS.map((row, ri) => (
+          <div key={ri} className="game__keyboard-row">
+            {row.map((key) => {
+              const state = letterStates.get(key) ?? "untried";
+              return (
+                <button
+                  disabled={gameOver}
+                  key={key}
+                  className={[
+                    "game__key",
+                    key === "ENTER" || key === "⌫" ? "game__key--wide" : "",
+                    `game__key--${state}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => handleKey(key)}
+                  aria-label={key === "⌫" ? "backspace" : key}
+                >
+                  {key}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

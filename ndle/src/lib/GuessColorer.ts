@@ -2,6 +2,10 @@ import type { TileState } from "../components/tile/Tile";
 
 export function ColorGuess(guess: string, word: string): Array<TileState> {
   const states: Array<TileState> = Array(guess.length).fill("absent");
+  if (guess.length !== word.length) {
+    console.log("guess " + guess + " word " + word);
+    return [];
+  }
   const letters = Array(26).fill(0);
 
   function letterIndex(char: string) {
