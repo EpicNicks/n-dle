@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "./Layout";
 import { WelcomePage } from "./pages/welcome-page/Welcome";
 import { GamePage } from "./pages/game-page/Game";
+import { NotFoundPage } from "./pages/not-found-page/NotFound";
 
 export const router = createBrowserRouter([
   {
@@ -10,6 +11,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <WelcomePage /> },
       { path: "game/:wordHash", element: <GamePage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);

@@ -6,6 +6,11 @@ import App from "./App.tsx";
 
 setRandomFavicon();
 
+const redirect = new URLSearchParams(window.location.search).get("redirect");
+if (redirect) {
+  window.history.replaceState(null, "", redirect);
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
