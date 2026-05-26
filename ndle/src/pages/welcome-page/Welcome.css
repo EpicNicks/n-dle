@@ -113,7 +113,13 @@
   font-weight: 700;
   color: #1a1a1b;
   outline: none;
-  -moz-appearance: textfield;
+
+  appearance: textfield;
+  .welcome__count::-webkit-outer-spin-button,
+  .welcome__count::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 /* hide number input spinners */

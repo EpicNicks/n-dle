@@ -33,21 +33,67 @@ const STATE_EMOJI: Record<TileState, string> = {
   filled: "⬛",
 };
 
+const EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+interface PersistedState {
+  guesses: LetterResult[][];
+  status: GameStatus;
+  savedAt: number;
+}
+
+function loadState(key: string): PersistedState | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed: PersistedState = JSON.parse(raw);
+    if (Date.now() - parsed.savedAt > EXPIRY_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(key: string, guesses: LetterResult[][], status: GameStatus) {
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({ guesses, status, savedAt: Date.now() }),
+    );
+  } catch {
+    /* empty */
+  }
+}
+
 export function GamePage() {
   const { wordHash } = useParams<{ wordHash: string }>();
   const navigate = useNavigate();
   const word = useMemo(() => decodeWord(wordHash ?? ""), [wordHash]);
   const wordLength = word.length;
   const maxGuesses = WordPicker.maxGuesses(word.length);
+  const storageKey = `ndle-game-${wordHash}`;
 
-  const [guesses, setGuesses] = useState<LetterResult[][]>([]);
+  const saved = useMemo(() => loadState(storageKey), [storageKey]);
+
+  const [guesses, setGuesses] = useState<LetterResult[][]>(
+    saved?.guesses ?? [],
+  );
   const [current, setCurrent] = useState<string>("");
-  const [revealedRows, setRevealedRows] = useState<boolean[]>([]);
+  const [revealedRows, setRevealedRows] = useState<boolean[]>(
+    saved ? saved.guesses.map(() => true) : [],
+  );
   const [shakingRow, setShakingRow] = useState<number | null>(null);
-  const [status, setStatus] = useState<GameStatus>("playing");
+  const [status, setStatus] = useState<GameStatus>(saved?.status ?? "playing");
   const [copied, setCopied] = useState(false);
 
   const copiedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Persist on every change
+  useEffect(() => {
+    saveState(storageKey, guesses, status);
+  }, [storageKey, guesses, status]);
 
   const letterStates = useMemo(() => {
     const map = new Map<string, TileState>();
@@ -124,12 +170,10 @@ export function GamePage() {
     const grid = guesses
       .map((row) => row.map(({ state }) => STATE_EMOJI[state]).join(""))
       .join("\n");
-    const text = `NDLE ${guessCount}/${maxGuesses}\n\n${grid}`;
+    const text = `NDLE #${wordHash} ${guessCount}/${maxGuesses}\n\n${grid}`;
 
     navigator.clipboard.writeText(text).then(() => {
-      if (copiedTimeout.current) {
-        clearTimeout(copiedTimeout.current);
-      }
+      if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
       setCopied(true);
       copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
     });
@@ -189,18 +233,16 @@ export function GamePage() {
           <div className="game__share-inner">
             {copied ? "Copied!" : "Share"}
             <svg
-              id="Footer-module_shareIcon__vrqx3"
               aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg"
               height="20"
               viewBox="0 0 24 24"
               width="20"
-              data-testid="icon-share"
             >
               <path
                 fill="white"
                 d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"
-              ></path>
+              />
             </svg>
           </div>
         </button>
