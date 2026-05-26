@@ -67,6 +67,21 @@ function saveState(key: string, guesses: LetterResult[][], status: GameStatus) {
   }
 }
 
+const ShareSVG = () => (
+  <svg
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    height="20"
+    viewBox="0 0 24 24"
+    width="20"
+  >
+    <path
+      fill="white"
+      d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"
+    />
+  </svg>
+);
+
 export function GamePage() {
   const { wordHash } = useParams<{ wordHash: string }>();
   const navigate = useNavigate();
@@ -87,8 +102,10 @@ export function GamePage() {
   const [shakingRow, setShakingRow] = useState<number | null>(null);
   const [status, setStatus] = useState<GameStatus>(saved?.status ?? "playing");
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const copiedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copiedLinkTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Persist on every change
   useEffect(() => {
@@ -173,9 +190,22 @@ export function GamePage() {
     const text = `NDLE #${wordHash} ${guessCount}/${maxGuesses}\n\n${grid}`;
 
     navigator.clipboard.writeText(text).then(() => {
-      if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
+      if (copiedTimeout.current) {
+        clearTimeout(copiedTimeout.current);
+      }
       setCopied(true);
       copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function handleShareLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      if (copiedLinkTimeout.current) {
+        clearTimeout(copiedLinkTimeout.current);
+      }
+      setLinkCopied(true);
+      copiedLinkTimeout.current = setTimeout(() => setLinkCopied(false), 2000);
     });
   }
 
@@ -215,7 +245,10 @@ export function GamePage() {
         </div>
       )}
 
-      <div className="game__board">
+      <div
+        className="game__board"
+        style={{ "--word-length": wordLength } as React.CSSProperties}
+      >
         {board.map(({ tiles, rowIndex }) => (
           <WordleRow
             key={rowIndex}
@@ -231,19 +264,8 @@ export function GamePage() {
       {gameOver && (
         <button className="game__share" onClick={handleShare}>
           <div className="game__share-inner">
-            {copied ? "Copied!" : "Share"}
-            <svg
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              height="20"
-              viewBox="0 0 24 24"
-              width="20"
-            >
-              <path
-                fill="white"
-                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92zM18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"
-              />
-            </svg>
+            {copied ? "Copied!" : "Share Result"}
+            <ShareSVG />
           </div>
         </button>
       )}
@@ -276,6 +298,12 @@ export function GamePage() {
           </div>
         ))}
       </div>
+      <button className="game__share" onClick={handleShareLink}>
+        <div className="game__share-inner">
+          {linkCopied ? "Copied Link" : "Share Puzzle"}
+          <ShareSVG />
+        </div>
+      </button>
     </div>
   );
 }

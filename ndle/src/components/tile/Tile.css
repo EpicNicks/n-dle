@@ -1,8 +1,8 @@
 /* ─── Tile ─────────────────────────────────────────────────────────────────── */
 
 .wordle-tile {
-  width: 62px;
-  height: 62px;
+  width: var(--tile-size, 62px);
+  height: var(--tile-height, 62px);
   border: 2px solid #d3d6da;
   border-radius: 4px;
   perspective: 250px;
@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
-  font-size: 2rem;
+  font-size: calc(var(--tile-size, 62px) * 0.5);
   font-weight: 700;
   color: inherit;
 }
@@ -103,7 +103,7 @@
 
 .wordle-row {
   display: flex;
-  gap: 6px;
+  gap: var(--tile-gap, 6px);
 }
 
 @keyframes wordle-row-shake {

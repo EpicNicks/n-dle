@@ -4,9 +4,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.25rem;
   min-height: calc(100vh - 4rem);
-  padding: 1rem;
+  padding: 1rem 0.5rem;
   font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -23,20 +23,61 @@
   color: #538d4e;
   cursor: pointer;
   padding: 0;
+  align-self: flex-start;
 }
 
 .game__home:hover {
   text-decoration: underline;
 }
 
+@media (max-width: 479px) and (orientation: portrait) {
+  .game__home {
+    position: static;
+    margin-bottom: -0.5rem;
+  }
+
+  .game__board {
+    margin-top: 0;
+  }
+}
+
+.game__board {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2.5rem;
+  --tile-gap: 5px;
+  --tile-size: min(
+    62px,
+    (100vw - 2rem - (var(--word-length, 5) - 1) * var(--tile-gap)) /
+      var(--word-length, 5)
+  );
+  --tile-height: min(62px, 100svh * 0.09);
+}
+
+@media (min-width: 480px) {
+  .game__board {
+    gap: 6px;
+    margin-top: 0;
+    --tile-gap: 6px;
+    --tile-size: min(
+      62px,
+      (100vw - 2rem - (var(--word-length, 5) - 1) * var(--tile-gap)) /
+        var(--word-length, 5)
+    );
+    --tile-height: min(62px, 100svh * 0.09);
+  }
+}
+
 /* ── Status banner ── */
 .game__banner {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  padding: 0.6rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 4px;
   color: #fff;
+  text-align: center;
 }
 
 .game__banner--won {
@@ -44,13 +85,6 @@
 }
 .game__banner--lost {
   background-color: #3a3a3c;
-}
-
-/* ── Board ── */
-.game__board {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 /* ── Share button ── */
@@ -70,6 +104,8 @@
     background-color 0.15s,
     transform 0.1s;
   min-width: 120px;
+  /* Easier tap target on mobile */
+  min-height: 44px;
 }
 
 .game__share:hover {
@@ -83,6 +119,7 @@
 .game__share-inner {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -90,25 +127,39 @@
 .game__keyboard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   max-width: 500px;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .game__keyboard-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+}
+
+@media (min-width: 480px) {
+  .game__keyboard {
+    gap: 8px;
+  }
+
+  .game__keyboard-row {
+    gap: 6px;
+  }
 }
 
 .game__key {
-  height: 58px;
-  min-width: 43px;
-  padding: 0 6px;
+  /* Fluid sizing: fills available row width on small screens */
+  flex: 1;
+  max-width: 43px;
+  height: 56px;
+  padding: 0 2px;
   border: none;
   border-radius: 4px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
@@ -116,11 +167,28 @@
     background-color 0.1s,
     color 0.1s;
   user-select: none;
+  /* Prevent text wrapping on narrow keys */
+  white-space: nowrap;
+  /* iOS tap highlight */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .game__key--wide {
-  min-width: 65px;
-  font-size: 0.75rem;
+  flex: 1.5;
+  max-width: 65px;
+  font-size: 0.7rem;
+}
+
+@media (min-width: 480px) {
+  .game__key {
+    height: 58px;
+    font-size: 0.85rem;
+  }
+
+  .game__key--wide {
+    font-size: 0.75rem;
+  }
 }
 
 .game__key--untried,
