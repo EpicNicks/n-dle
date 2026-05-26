@@ -8,11 +8,11 @@ setRandomFavicon();
 
 const redirect = new URLSearchParams(window.location.search).get("redirect");
 if (redirect) {
-  window.location.replace(decodeURIComponent(redirect));
-} else {
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
+  window.history.replaceState(null, "", decodeURIComponent(redirect));
 }
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
