@@ -141,7 +141,10 @@ export function WelcomePage() {
         />
         <span className="welcome__bang">!</span>
       </div>
-      <p className="welcome__guess">({backingWord.toUpperCase()})</p>
+      <p className="welcome__guess">
+        ( {backingWord.toUpperCase()}
+        {backingWord === NDLE ? " !" : ""} )
+      </p>
 
       <p className="welcome__sub">Guess the word in a fair amount of tries!</p>
 
