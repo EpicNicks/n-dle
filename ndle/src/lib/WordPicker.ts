@@ -37,7 +37,14 @@ function randomElement<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-export function validateWord(word: string): boolean {
+export function validateWord(
+  word: string,
+  additionalWords: Array<string> = [],
+): boolean {
+  // for custom words mostly
+  if (additionalWords.includes(word)) {
+    return true;
+  }
   if (validateCache.word.toUpperCase() == word.toUpperCase()) {
     return validateCache.isValid;
   }

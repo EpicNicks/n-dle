@@ -131,7 +131,7 @@ export function GamePage() {
       return;
     }
 
-    if (!WordPicker.validateWord(current)) {
+    if (!WordPicker.validateWord(current, [word])) {
       setShakingRow(guesses.length);
       return;
     }
