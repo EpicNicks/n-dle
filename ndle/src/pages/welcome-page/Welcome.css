@@ -1,4 +1,5 @@
 .welcome {
+  --fade-rate: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,7 +10,6 @@
   font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
 }
 
-/* ── Logo ── */
 .welcome__logo {
   display: flex;
   align-items: center;
@@ -21,7 +21,8 @@
   color: #787c7e;
   margin: 0;
   opacity: 0;
-  animation: welcome-in 10s ease-out 1.3s forwards;
+  animation: welcome-in calc(10s / var(--fade-rate)) ease-out
+    calc(1.3s / var(--fade-rate)) forwards;
 }
 
 .welcome__bang {
@@ -34,7 +35,8 @@
   line-height: 1;
   opacity: 0;
   transform: translateY(-8px);
-  animation: welcome-in 0.35s ease-out 1.1s forwards;
+  animation: welcome-in calc(0.35s / var(--fade-rate)) ease-out
+    calc(1.1s / var(--fade-rate)) forwards;
 }
 
 @keyframes welcome-in {
@@ -44,23 +46,93 @@
   }
 }
 
-/* ── Subtitle ── */
 .welcome__sub {
   font-size: 1rem;
   color: #787c7e;
   margin: 0;
   opacity: 0;
-  animation: welcome-in 0.4s ease-out 1.3s forwards;
+  animation: welcome-in calc(0.4s / var(--fade-rate)) ease-out
+    calc(1.3s / var(--fade-rate)) forwards;
 }
 
-/* ── Word length config ── */
+.welcome__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background: #ededed;
+  opacity: 0;
+  animation: welcome-in calc(0.4s / var(--fade-rate)) ease-out
+    calc(1.5s / var(--fade-rate)) forwards;
+}
+
+.welcome__tab {
+  min-width: 96px;
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #787c7e;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.welcome__tab:hover:not(.welcome__tab--active) {
+  color: #1a1a1b;
+}
+
+.welcome__tab--active {
+  background: #fff;
+  color: #1a1a1b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
 .welcome__config {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+}
+
+.welcome__config--intro > .welcome__label,
+.welcome__config--intro > .welcome__stepper,
+.welcome__config--intro > .welcome__word,
+.welcome__config--intro > .welcome__range,
+.welcome__config--intro > .welcome__guesses {
   opacity: 0;
-  animation: welcome-in 0.4s ease-out 1.5s forwards;
+  animation: welcome-fade calc(0.3s / var(--fade-rate)) ease-out forwards;
+}
+
+.welcome__config--intro > .welcome__label {
+  animation-delay: calc(1.55s / var(--fade-rate));
+}
+.welcome__config--intro > .welcome__stepper,
+.welcome__config--intro > .welcome__word {
+  animation-delay: calc(1.59s / var(--fade-rate));
+}
+.welcome__config--intro > .welcome__range {
+  animation-delay: calc(1.63s / var(--fade-rate));
+}
+.welcome__config--intro > .welcome__guesses {
+  animation-delay: calc(1.67s / var(--fade-rate));
+}
+
+@keyframes welcome-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .welcome__label {
@@ -113,16 +185,10 @@
   font-weight: 700;
   color: #1a1a1b;
   outline: none;
-
   appearance: textfield;
-  .welcome__count::-webkit-outer-spin-button,
-  .welcome__count::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
+  -moz-appearance: textfield;
 }
 
-/* hide number input spinners */
 .welcome__count::-webkit-outer-spin-button,
 .welcome__count::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -135,10 +201,61 @@
   margin: 0;
 }
 
-/* ── Play button ── */
+.welcome__word {
+  width: 220px;
+  max-width: 80vw;
+  height: 48px;
+  border: 2px solid #d3d6da;
+  border-radius: 6px;
+  text-align: center;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #1a1a1b;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.welcome__word:focus {
+  border-color: #538d4e;
+}
+
+.welcome__guesses {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.welcome__check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #787c7e;
+  cursor: pointer;
+  user-select: none;
+}
+
+.welcome__stepper--small .welcome__step {
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+}
+
+.welcome__stepper--small .welcome__count {
+  width: 44px;
+  height: 36px;
+  font-size: 1rem;
+}
+
 .welcome__play {
   opacity: 0;
-  animation: welcome-in 0.4s ease-out 1.7s forwards;
+  animation: welcome-in calc(0.4s / var(--fade-rate)) ease-out
+    calc(1.75s / var(--fade-rate)) forwards;
 
   font-family: inherit;
   font-size: 1rem;
@@ -164,4 +281,9 @@
 .welcome__play:active {
   background-color: #3e6e3a;
   transform: scale(0.98);
+}
+
+.welcome__play:disabled {
+  opacity: 0.45;
+  cursor: default;
 }

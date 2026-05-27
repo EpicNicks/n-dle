@@ -128,3 +128,26 @@
 .wordle-row--shake {
   animation: wordle-row-shake 0.5s ease-in-out;
 }
+
+/* ── Win bounce: plays on the winning row after flips finish ── */
+@keyframes wordle-tile-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-30px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+  75% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.wordle-tile--bounce {
+  animation: wordle-tile-bounce 0.55s ease-in-out var(--bounce-delay, 0ms) both;
+}

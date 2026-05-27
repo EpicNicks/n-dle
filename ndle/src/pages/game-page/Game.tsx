@@ -41,6 +41,27 @@ interface PersistedState {
   savedAt: number;
 }
 
+function parseHashParam(raw: string): {
+  encodedWord: string;
+  guessOverride: number | null;
+} {
+  const lastDash = raw.lastIndexOf("-");
+  if (lastDash === -1) {
+    return { encodedWord: raw, guessOverride: null };
+  }
+
+  const suffix = raw.slice(lastDash + 1);
+  // Only treat suffix as a guess count if it's a clean positive integer.
+  if (/^\d+$/.test(suffix)) {
+    const n = parseInt(suffix, 10);
+    if (n > 0) {
+      return { encodedWord: raw.slice(0, lastDash), guessOverride: n };
+    }
+  }
+
+  return { encodedWord: raw, guessOverride: null };
+}
+
 function loadState(key: string): PersistedState | null {
   try {
     const raw = localStorage.getItem(key);
@@ -85,9 +106,22 @@ const ShareSVG = () => (
 export function GamePage() {
   const { wordHash } = useParams<{ wordHash: string }>();
   const navigate = useNavigate();
-  const word = useMemo(() => decodeWord(wordHash ?? ""), [wordHash]);
+
+  const { encodedWord, guessOverride } = useMemo(
+    () => parseHashParam(wordHash ?? ""),
+    [wordHash],
+  );
+
+  const word = useMemo(() => decodeWord(encodedWord), [encodedWord]);
   const wordLength = word.length;
-  const maxGuesses = WordPicker.maxGuesses(word.length);
+
+  const maxGuesses = useMemo(() => {
+    if (guessOverride != null) {
+      return Math.max(1, guessOverride);
+    }
+    return WordPicker.maxGuesses(word.length);
+  }, [guessOverride, word.length]);
+
   const storageKey = `ndle-game-${wordHash}`;
 
   const saved = useMemo(() => loadState(storageKey), [storageKey]);

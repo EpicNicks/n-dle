@@ -8,12 +8,18 @@ export interface WordleTileProps {
   state?: TileState;
   /** Stagger delay in ms for the reveal flip animation */
   revealDelay?: number;
+  /** Whether to play the win bounce animation */
+  bouncing?: boolean;
+  /** Stagger delay in ms for the bounce animation */
+  bounceDelay?: number;
 }
 
 export function WordleTile({
   letter = "",
   state = "empty",
   revealDelay = 0,
+  bouncing = false,
+  bounceDelay = 0,
 }: WordleTileProps) {
   const tileRef = useRef<HTMLDivElement>(null);
   const prevLetter = useRef("");
@@ -39,10 +45,16 @@ export function WordleTile({
         "wordle-tile",
         letter ? "wordle-tile--filled" : "",
         isRevealed ? `wordle-tile--${state}` : "",
+        bouncing ? "wordle-tile--bounce" : "",
       ]
         .filter(Boolean)
         .join(" ")}
-      style={{ "--reveal-delay": `${revealDelay}ms` } as React.CSSProperties}
+      style={
+        {
+          "--reveal-delay": `${revealDelay}ms`,
+          "--bounce-delay": `${bounceDelay}ms`,
+        } as React.CSSProperties
+      }
       aria-label={letter ? `${letter}, ${state}` : "empty"}
       aria-live="polite"
     >

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { WordleTile, type TileState } from "./Tile.tsx";
 
 export interface LetterResult {
@@ -19,7 +19,11 @@ export interface WordleRowProps {
   onShakeEnd?: () => void;
   /** Delay between each tile's flip in ms (default 150) */
   staggerMs?: number;
+  /** Delay between each tile's win bounce in ms (default 100) */
+  bounceStaggerMs?: number;
 }
+
+const FLIP_DURATION_MS = 500;
 
 export function WordleRow({
   tiles,
@@ -28,8 +32,10 @@ export function WordleRow({
   shaking = false,
   onShakeEnd,
   staggerMs = 150,
+  bounceStaggerMs = 100,
 }: WordleRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const [bouncing, setBouncing] = useState(false);
 
   useEffect(() => {
     if (!shaking || !rowRef.current) return;
@@ -41,6 +47,22 @@ export function WordleRow({
     el.addEventListener("animationend", handler, { once: true });
     return () => el.removeEventListener("animationend", handler);
   }, [shaking, onShakeEnd]);
+
+  const isWin =
+    revealed &&
+    tiles.length === length &&
+    tiles.length > 0 &&
+    tiles.every((t) => t.state === "correct");
+
+  useEffect(() => {
+    if (!isWin) return;
+    const flipDoneMs = (length - 1) * staggerMs + FLIP_DURATION_MS;
+    const t = setTimeout(() => setBouncing(true), flipDoneMs);
+    return () => {
+      clearTimeout(t);
+      setBouncing(false);
+    };
+  }, [isWin, length, staggerMs]);
 
   const columns = Array.from({ length }, (_, i) => {
     const tile = tiles[i];
@@ -58,6 +80,8 @@ export function WordleRow({
           letter={col.letter}
           state={col.state as TileState}
           revealDelay={revealed ? i * staggerMs : 0}
+          bouncing={bouncing}
+          bounceDelay={i * bounceStaggerMs}
         />
       ))}
     </div>
