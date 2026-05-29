@@ -4,7 +4,7 @@ import { useRoom } from "../../lib/multiplayer/RoomContext";
 import { MODES } from "../../lib/multiplayer/modes";
 import { MultiplayerGame } from "./MultiplayerGame";
 import { type PlayerInfo } from "../../lib/multiplayer/types";
-import "./multiplayer.css";
+import "./Multiplayer.css";
 
 const POOF_MS = 650;
 

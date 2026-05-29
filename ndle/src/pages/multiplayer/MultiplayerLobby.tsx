@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useRoom } from "../../lib/multiplayer/RoomContext";
 import { MODES, buildConfig } from "../../lib/multiplayer/modes";
 import { type GameModeId } from "../../lib/multiplayer/types";
-import "./multiplayer.css";
+import "./Multiplayer.css";
 
 export function MultiplayerLobby() {
   const nav = useNavigate();
