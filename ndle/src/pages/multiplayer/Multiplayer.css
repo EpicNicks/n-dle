@@ -1,0 +1,507 @@
+/* Multiplayer styles — matched to ndle's LIGHT theme (see Welcome.css / Game.css).
+   Palette: white surfaces, #d3d6da borders, #1a1a1b text, #787c7e muted,
+   #538d4e green. Boards/keyboard/tiles render via the shared game CSS, so this
+   file only themes the multiplayer chrome and never restyles .wordle-tile. */
+:root {
+  --mp-fg: #1a1a1b;
+  --mp-muted: #787c7e;
+  --mp-faint: #b0b3b5;
+  --mp-border: #d3d6da;
+  --mp-surface: #ffffff;
+  --mp-surface-2: #f6f7f8;
+  --mp-accent: #538d4e;
+  --mp-accent-hover: #6aaf65;
+  --mp-present: #c9b458;
+  --mp-danger: #c4332f;
+}
+
+.mp-lobby,
+.mp-room,
+.mp-game {
+  color: var(--mp-fg);
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.mp-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 1rem;
+  color: var(--mp-fg);
+}
+.mp-mode-line {
+  color: var(--mp-muted);
+  margin: 0.25rem 0 1rem;
+}
+
+/* ---- forms ---- */
+.mp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.mp-field > span {
+  font-size: 0.8rem;
+  color: var(--mp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+.mp-field input {
+  background: var(--mp-surface);
+  border: 2px solid var(--mp-border);
+  color: var(--mp-fg);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+}
+.mp-field input:focus {
+  border-color: var(--mp-accent);
+}
+.mp-code-input {
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mp-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1rem;
+  padding: 4px;
+  background: #ededed;
+  border-radius: 8px;
+}
+.mp-tabs button {
+  flex: 1;
+  padding: 0.55rem;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--mp-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.mp-tabs button:hover:not(.active) {
+  color: var(--mp-fg);
+}
+.mp-tabs button.active {
+  background: var(--mp-surface);
+  color: var(--mp-fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.mp-panel {
+  display: flex;
+  flex-direction: column;
+}
+.mp-modes {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.mp-mode-card {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border-radius: 8px;
+  border: 2px solid var(--mp-border);
+  background: var(--mp-surface);
+  color: var(--mp-fg);
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.mp-mode-card strong {
+  font-weight: 700;
+}
+.mp-mode-card span {
+  color: var(--mp-muted);
+  font-size: 0.85rem;
+}
+.mp-mode-card:hover {
+  border-color: var(--mp-faint);
+}
+.mp-mode-card.selected {
+  border-color: var(--mp-accent);
+  background: #eef5ed;
+}
+.mp-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.mp-primary {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--mp-accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s;
+}
+.mp-primary:hover:not(:disabled) {
+  background: var(--mp-accent-hover);
+}
+.mp-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mp-error {
+  color: var(--mp-danger);
+}
+.mp-waiting {
+  color: var(--mp-muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* ---- waiting room ---- */
+.mp-room-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.mp-copy {
+  background: var(--mp-surface);
+  border: 2px solid var(--mp-border);
+  color: var(--mp-fg);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.mp-copy:hover {
+  border-color: var(--mp-faint);
+}
+.mp-roster {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.mp-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--mp-surface);
+  border: 1px solid var(--mp-border);
+  border-radius: 8px;
+  position: relative;
+}
+.mp-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mp-accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+.mp-roster-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-roster-name em {
+  color: var(--mp-muted);
+  font-style: normal;
+  font-weight: 400;
+}
+.mp-host-tag {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-accent);
+  border: 1px solid var(--mp-accent);
+  border-radius: 4px;
+  padding: 0 0.35rem;
+}
+
+/* ---- poof ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .mp-roster-row.poof {
+    animation: poof 0.65s ease forwards;
+  }
+  .mp-poof-puff {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: radial-gradient(
+      circle,
+      rgba(120, 124, 126, 0.45),
+      transparent 70%
+    );
+    animation: puff 0.65s ease forwards;
+    pointer-events: none;
+  }
+}
+@keyframes poof {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  40% {
+    transform: scale(1.06) rotate(-2deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(0.4) rotate(8deg);
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+@keyframes puff {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* ---- in-game layout ---- */
+.mp-game {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "hud play" "opp opp";
+  gap: 1.25rem;
+  align-items: start;
+}
+.mp-hud {
+  grid-area: hud;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.mp-play-area {
+  grid-area: play;
+  display: flex;
+  justify-content: center;
+}
+.mp-opponents {
+  grid-area: opp;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.mp-local {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mp-clock {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mp-score {
+  color: var(--mp-muted);
+  font-variant-numeric: tabular-nums;
+}
+.mp-horse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.mp-horse-label {
+  font-size: 0.85rem;
+  color: var(--mp-muted);
+}
+
+/* ---- HORSE meter (built from the shared NdleTile) ---- */
+.mp-horse-meter {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+/* NdleTile sizes itself; scale it down for the meter without restyling it */
+.mp-horse-meter.md .wordle-tile {
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+}
+.mp-horse-meter.sm .wordle-tile {
+  width: 20px;
+  height: 20px;
+  font-size: 0.65rem;
+}
+.mp-horse-meter.danger {
+  border-color: var(--mp-present);
+  background: rgba(201, 180, 88, 0.14);
+}
+.mp-horse-meter.eliminated {
+  border-color: var(--mp-danger);
+  background: rgba(196, 51, 47, 0.08);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mp-horse-meter.eliminated {
+    animation: outPulse 0.5s ease;
+  }
+}
+@keyframes outPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(196, 51, 47, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(196, 51, 47, 0);
+  }
+}
+
+/* ---- opponent cards ---- */
+.mp-opp {
+  background: var(--mp-surface);
+  border: 1px solid var(--mp-border);
+  padding: 0.6rem;
+  border-radius: 8px;
+}
+.mp-opp header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.mp-opp header > span:first-child {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-opp.spectating {
+  opacity: 0.55;
+}
+/* shrink the shared board for the opponent thumbnail; zoom reflows (no overlap) */
+.mp-opp-board {
+  zoom: 0.55;
+}
+.mp-opp-board .game__board {
+  pointer-events: none;
+}
+
+.mp-done-pill {
+  flex-shrink: 0;
+  background: var(--mp-accent);
+  color: #fff;
+  border-radius: 4px;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.mp-out-pill {
+  flex-shrink: 0;
+  background: #fff;
+  color: var(--mp-danger);
+  border: 1px solid var(--mp-danger);
+  border-radius: 4px;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+/* ---- standings ---- */
+.mp-standings {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.4rem;
+  counter-reset: rank;
+}
+.mp-standings li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--mp-surface);
+  border: 1px solid var(--mp-border);
+  border-radius: 6px;
+}
+.mp-standings li::before {
+  counter-increment: rank;
+  content: counter(rank);
+  flex-shrink: 0;
+  width: 1.4rem;
+  color: var(--mp-faint);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.mp-standings li .mp-roster-name {
+  flex: 1;
+}
+.mp-standings li.out {
+  opacity: 0.55;
+}
+.mp-standings li.out .mp-roster-name {
+  text-decoration: line-through;
+}
+.mp-answer {
+  text-align: center;
+  color: var(--mp-muted);
+  margin-top: 1rem;
+}
+.mp-answer strong {
+  color: var(--mp-accent);
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 640px) {
+  .mp-game {
+    grid-template-columns: 1fr;
+    grid-template-areas: "hud" "play" "opp";
+  }
+}

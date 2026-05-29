@@ -1,37 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { WordleRow, type LetterResult } from "../../components/tile/TileRow";
-import { ColorGuess } from "../../lib/GuessColorer";
+import { type LetterResult } from "../../components/tile/TileRow";
 import { decodeWord } from "../../lib/WordHash";
 import * as WordPicker from "../../lib/WordPicker";
 import { WordDefinition } from "../../components/definition/Definition";
-import type { TileState } from "../../components/tile/Tile";
+import {
+  useNdleGame,
+  type GameStatus,
+} from "../../components/game/useNdleGame";
+import { NdleBoard } from "../../components/game/NdleBoard";
+import { Keyboard } from "../../components/game/Keyboard";
+import { shareGrid } from "../../components/game/ShareGrid";
 import "./Game.css";
-
-const KEYBOARD_ROWS = [
-  ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-  ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-  ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
-];
-
-type GameStatus = "playing" | "won" | "lost";
-
-const STATE_PRIORITY: Record<TileState | "untried", number> = {
-  correct: 3,
-  present: 2,
-  absent: 1,
-  untried: 0,
-  empty: 0,
-  filled: 0,
-};
-
-const STATE_EMOJI: Record<TileState, string> = {
-  correct: "🟩",
-  present: "🟨",
-  absent: "⬛",
-  empty: "⬛",
-  filled: "⬛",
-};
 
 const EXPIRY_MS = 24 * 60 * 60 * 1000;
 
@@ -46,19 +26,12 @@ function parseHashParam(raw: string): {
   guessOverride: number | null;
 } {
   const lastDash = raw.lastIndexOf("-");
-  if (lastDash === -1) {
-    return { encodedWord: raw, guessOverride: null };
-  }
-
+  if (lastDash === -1) return { encodedWord: raw, guessOverride: null };
   const suffix = raw.slice(lastDash + 1);
-  // Only treat suffix as a guess count if it's a clean positive integer.
   if (/^\d+$/.test(suffix)) {
     const n = parseInt(suffix, 10);
-    if (n > 0) {
-      return { encodedWord: raw.slice(0, lastDash), guessOverride: n };
-    }
+    if (n > 0) return { encodedWord: raw.slice(0, lastDash), guessOverride: n };
   }
-
   return { encodedWord: raw, guessOverride: null };
 }
 
@@ -111,158 +84,51 @@ export function GamePage() {
     () => parseHashParam(wordHash ?? ""),
     [wordHash],
   );
-
   const word = useMemo(() => decodeWord(encodedWord), [encodedWord]);
-  const wordLength = word.length;
 
   const maxGuesses = useMemo(() => {
-    if (guessOverride != null) {
-      return Math.max(1, guessOverride);
-    }
+    if (guessOverride != null) return Math.max(1, guessOverride);
     return WordPicker.maxGuesses(word.length);
   }, [guessOverride, word.length]);
 
   const storageKey = `ndle-game-${wordHash}`;
-
   const saved = useMemo(() => loadState(storageKey), [storageKey]);
 
-  const [guesses, setGuesses] = useState<LetterResult[][]>(
-    saved?.guesses ?? [],
-  );
-  const [current, setCurrent] = useState<string>("");
-  const [revealedRows, setRevealedRows] = useState<boolean[]>(
-    saved ? saved.guesses.map(() => true) : [],
-  );
-  const [shakingRow, setShakingRow] = useState<number | null>(null);
-  const [status, setStatus] = useState<GameStatus>(saved?.status ?? "playing");
+  const game = useNdleGame({
+    word,
+    maxGuesses,
+    dictionary: [word], // TODO: pass your real dictionary for this length
+    initialGuesses: saved?.guesses,
+    initialStatus: saved?.status,
+    onChange: (guesses, status) => saveState(storageKey, guesses, status),
+  });
+
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-
   const copiedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedLinkTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Persist on every change
-  useEffect(() => {
-    saveState(storageKey, guesses, status);
-  }, [storageKey, guesses, status]);
-
-  const letterStates = useMemo(() => {
-    const map = new Map<string, TileState>();
-    guesses.forEach((row) => {
-      row.forEach(({ letter, state }) => {
-        const cur = map.get(letter) ?? "empty";
-        if (STATE_PRIORITY[state] > STATE_PRIORITY[cur]) {
-          map.set(letter, state);
-        }
-      });
-    });
-    return map;
-  }, [guesses]);
-
-  const submitGuess = useCallback(() => {
-    if (current.length !== wordLength) {
-      setShakingRow(guesses.length);
-      return;
-    }
-
-    if (!WordPicker.validateWord(current, [word])) {
-      setShakingRow(guesses.length);
-      return;
-    }
-
-    const states = ColorGuess(current, word);
-    const row: LetterResult[] = current
-      .split("")
-      .map((letter, i) => ({ letter, state: states[i] }));
-
-    const newGuesses = [...guesses, row];
-    setGuesses(newGuesses);
-    setCurrent("");
-
-    setTimeout(() => {
-      setRevealedRows((prev) => {
-        const next = [...prev];
-        next[newGuesses.length - 1] = true;
-        return next;
-      });
-
-      const won = states.every((s) => s === "correct");
-      if (won) {
-        setStatus("won");
-      } else if (newGuesses.length >= maxGuesses) {
-        setStatus("lost");
-      }
-    }, 100);
-  }, [current, guesses, word, wordLength, maxGuesses]);
-
-  const handleKey = useCallback(
-    (key: string) => {
-      if (status !== "playing") return;
-
-      if (key === "ENTER") {
-        submitGuess();
-      } else if (key === "⌫" || key === "BACKSPACE") {
-        setCurrent((c) => c.slice(0, -1));
-      } else if (/^[A-Z]$/.test(key) && current.length < wordLength) {
-        setCurrent((c) => c + key);
-      }
-    },
-    [status, current, wordLength, submitGuess],
-  );
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => handleKey(e.key.toUpperCase());
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [handleKey]);
-
   function handleShare() {
-    const guessCount = status === "won" ? guesses.length : "X";
-    const grid = guesses
-      .map((row) => row.map(({ state }) => STATE_EMOJI[state]).join(""))
-      .join("\n");
-    const text = `NDLE #${wordHash} ${guessCount}/${maxGuesses}\n\n${grid}`;
-
+    const guessCount = game.status === "won" ? game.guesses.length : "X";
+    const text = `NDLE #${wordHash} ${guessCount}/${maxGuesses}\n\n${shareGrid(game.guesses)}`;
     navigator.clipboard.writeText(text).then(() => {
-      if (copiedTimeout.current) {
-        clearTimeout(copiedTimeout.current);
-      }
+      if (copiedTimeout.current) clearTimeout(copiedTimeout.current);
       setCopied(true);
       copiedTimeout.current = setTimeout(() => setCopied(false), 2000);
     });
   }
 
   function handleShareLink() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      if (copiedLinkTimeout.current) {
-        clearTimeout(copiedLinkTimeout.current);
-      }
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      if (copiedLinkTimeout.current) clearTimeout(copiedLinkTimeout.current);
       setLinkCopied(true);
       copiedLinkTimeout.current = setTimeout(() => setLinkCopied(false), 2000);
     });
   }
 
-  if (!word) {
-    return <div className="game__error">Invalid game link.</div>;
-  }
+  if (!word) return <div className="game__error">Invalid game link.</div>;
 
-  const gameOver = status === "won" || status === "lost";
-
-  const board: { tiles: LetterResult[]; rowIndex: number }[] = [];
-
-  for (let i = 0; i < maxGuesses; i++) {
-    if (i < guesses.length) {
-      board.push({ tiles: guesses[i], rowIndex: i });
-    } else if (i === guesses.length && status === "playing") {
-      const tiles: LetterResult[] = current
-        .split("")
-        .map((letter) => ({ letter, state: "filled" as TileState }));
-      board.push({ tiles, rowIndex: i });
-    } else {
-      board.push({ tiles: [], rowIndex: i });
-    }
-  }
+  const gameOver = game.status === "won" || game.status === "lost";
 
   return (
     <div className="game">
@@ -270,30 +136,25 @@ export function GamePage() {
         ← NDLE!
       </button>
 
-      {status === "won" && (
+      {game.status === "won" && (
         <div className="game__banner game__banner--won">🎉 You got it!</div>
       )}
-      {status === "lost" && (
+      {game.status === "lost" && (
         <div className="game__banner game__banner--lost">
           The word was <strong>{word}</strong>
         </div>
       )}
 
-      <div
-        className="game__board"
-        style={{ "--word-length": wordLength } as React.CSSProperties}
-      >
-        {board.map(({ tiles, rowIndex }) => (
-          <WordleRow
-            key={rowIndex}
-            tiles={tiles}
-            length={wordLength}
-            revealed={revealedRows[rowIndex] ?? false}
-            shaking={shakingRow === rowIndex}
-            onShakeEnd={() => setShakingRow(null)}
-          />
-        ))}
-      </div>
+      <NdleBoard
+        guesses={game.guesses}
+        wordLength={game.wordLength}
+        maxGuesses={game.maxGuesses}
+        revealedRows={game.revealedRows}
+        current={game.current}
+        active={game.status === "playing"}
+        shakingRow={game.shakingRow}
+        onShakeEnd={game.clearShake}
+      />
 
       {gameOver && (
         <button className="game__share" onClick={handleShare}>
@@ -306,32 +167,12 @@ export function GamePage() {
 
       {gameOver && <WordDefinition word={word} />}
 
-      <div className="game__keyboard">
-        {KEYBOARD_ROWS.map((row, ri) => (
-          <div key={ri} className="game__keyboard-row">
-            {row.map((key) => {
-              const state = letterStates.get(key) ?? "untried";
-              return (
-                <button
-                  disabled={gameOver}
-                  key={key}
-                  className={[
-                    "game__key",
-                    key === "ENTER" || key === "⌫" ? "game__key--wide" : "",
-                    `game__key--${state}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => handleKey(key)}
-                  aria-label={key === "⌫" ? "backspace" : key}
-                >
-                  {key}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      <Keyboard
+        guesses={game.guesses}
+        onKey={game.handleKey}
+        disabled={gameOver}
+      />
+
       <button className="game__share" onClick={handleShareLink}>
         <div className="game__share-inner">
           {linkCopied ? "Copied Link" : "Share Puzzle"}

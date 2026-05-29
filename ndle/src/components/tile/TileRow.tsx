@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { WordleTile, type TileState } from "./Tile.tsx";
+import { NdleTile, type TileState } from "./Tile.tsx";
 
 export interface LetterResult {
   letter: string;
@@ -25,7 +25,7 @@ export interface WordleRowProps {
 
 const FLIP_DURATION_MS = 500;
 
-export function WordleRow({
+export function NdleRow({
   tiles,
   length = 5,
   revealed = false,
@@ -75,7 +75,7 @@ export function WordleRow({
   return (
     <div ref={rowRef} className="wordle-row" role="group" aria-label="word row">
       {columns.map((col, i) => (
-        <WordleTile
+        <NdleTile
           key={i}
           letter={col.letter}
           state={col.state as TileState}

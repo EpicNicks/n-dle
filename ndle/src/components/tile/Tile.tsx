@@ -3,7 +3,7 @@ import "./Tile.css";
 
 export type TileState = "empty" | "filled" | "correct" | "present" | "absent";
 
-export interface WordleTileProps {
+export interface NdleTileProps {
   letter?: string;
   state?: TileState;
   /** Stagger delay in ms for the reveal flip animation */
@@ -14,13 +14,13 @@ export interface WordleTileProps {
   bounceDelay?: number;
 }
 
-export function WordleTile({
+export function NdleTile({
   letter = "",
   state = "empty",
   revealDelay = 0,
   bouncing = false,
   bounceDelay = 0,
-}: WordleTileProps) {
+}: NdleTileProps) {
   const tileRef = useRef<HTMLDivElement>(null);
   const prevLetter = useRef("");
 

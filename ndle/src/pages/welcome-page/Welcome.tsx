@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { WordleRow } from "../../components/tile/TileRow";
+import { NdleRow } from "../../components/tile/TileRow";
 import {
   pickWord,
   minWordLength,
   maxWordLength,
   maxGuesses as defaultMaxGuesses,
 } from "../../lib/WordPicker";
-import { ColorGuess } from "../../lib/GuessColorer";
+import { colorGuess } from "../../lib/GuessColorer";
 import { encodeWord } from "../../lib/WordHash";
 import "./Welcome.css";
 
@@ -24,7 +24,7 @@ function buildParam(encoded: string, guesses: number | null): string {
   return guesses == null ? encoded : `${encoded}-${guesses}`;
 }
 
-type ModeId = "random" | "custom";
+type ModeId = "random" | "custom" | "multiplayer";
 
 interface ModeDef {
   id: ModeId;
@@ -35,6 +35,11 @@ interface ModeDef {
 const MODES: ModeDef[] = [
   { id: "random", tabLabel: "Random", playButtonLabel: "Play" },
   { id: "custom", tabLabel: "Custom", playButtonLabel: "Play custom" },
+  {
+    id: "multiplayer",
+    tabLabel: "Multiplayer",
+    playButtonLabel: "Play with friends",
+  },
 ];
 
 export function WelcomePage() {
@@ -47,7 +52,7 @@ export function WelcomePage() {
     }
     return pickWord(4);
   }, []);
-  const states = useMemo(() => ColorGuess(NDLE, backingWord), [backingWord]);
+  const states = useMemo(() => colorGuess(NDLE, backingWord), [backingWord]);
 
   const [mode, setMode] = useState<ModeId>("random");
 
@@ -115,6 +120,8 @@ export function WelcomePage() {
       navigate(
         `/game/${buildParam(encodeWord(sanitizedCustom), customGuesses)}`,
       );
+    } else if (mode === "multiplayer") {
+      navigate("/multiplayer");
     }
   }
 
@@ -123,7 +130,7 @@ export function WelcomePage() {
   return (
     <div className="welcome">
       <div className="welcome__logo" aria-label="ndle">
-        <WordleRow
+        <NdleRow
           tiles={
             revealed
               ? NDLE.split("").map((letter, i) => ({
@@ -251,6 +258,16 @@ export function WelcomePage() {
               onChange={setCustomGuesses}
             />
           </>
+        )}
+
+        {mode === "multiplayer" && (
+          <div className="welcome__mp">
+            <label className="welcome__label">Play with friends</label>
+            <p className="welcome__range">
+              Host a room or join one by code. Race the same word, time attack,
+              or HORSE.
+            </p>
+          </div>
         )}
       </div>
 
