@@ -22,7 +22,7 @@ import { NdleBoard } from "../../components/game/NdleBoard";
 import { Keyboard } from "../../components/game/Keyboard";
 import { NdleTile } from "../../components/tile/Tile";
 import * as WordPicker from "../../lib/WordPicker";
-import "./multiplayer.css";
+import "./Multiplayer.css";
 
 const HORSE = "HORSE";
 
