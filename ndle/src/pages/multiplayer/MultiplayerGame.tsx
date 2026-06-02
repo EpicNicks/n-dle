@@ -22,7 +22,7 @@ import { NdleBoard } from "../../components/game/NdleBoard";
 import { Keyboard } from "../../components/game/Keyboard";
 import { NdleTile } from "../../components/tile/Tile";
 import * as WordPicker from "../../lib/WordPicker";
-import "./Multiplayer.css";
+import "./multiplayer.css";
 
 const HORSE = "HORSE";
 
@@ -156,9 +156,9 @@ export function MultiplayerGame() {
   if (!state || !room) return null;
 
   const self = state.players.find((p) => p.id === state.selfId)!;
-  const others = state.players.filter(
-    (p) => p.id !== state.selfId && p.connected,
-  );
+  // keep dropped players in the list so we can show a "left" cue rather than
+  // having them silently vanish mid-game
+  const others = state.players.filter((p) => p.id !== state.selfId);
 
   if (state.phase === "finished") return <Standings />;
 
@@ -226,15 +226,23 @@ export function MultiplayerGame() {
       <section className="mp-opponents">
         {others.map((p) => {
           const oppOut = mode === "horse" && isEliminated(p);
+          const dropped = !p.connected;
+          // typingRow is derived host-side as patterns.length, so it always
+          // points at the live row; just check they have letters down
+          const typingActive = !dropped && (p.typingFilled ?? 0) > 0;
           return (
-            <div className={`mp-opp ${oppOut ? "spectating" : ""}`} key={p.id}>
+            <div
+              className={`mp-opp ${oppOut ? "spectating" : ""} ${dropped ? "dropped" : ""}`}
+              key={p.id}
+            >
               <header>
                 <span>{p.name}</span>
-                {mode === "timeAttack" && (
+                {mode === "timeAttack" && !dropped && (
                   <span className="mp-score">{p.taScore ?? 0}</span>
                 )}
-                {oppOut && <span className="mp-out-pill">out</span>}
-                {!oppOut && p.status === "done" && (
+                {dropped && <span className="mp-left-pill">left</span>}
+                {!dropped && oppOut && <span className="mp-out-pill">out</span>}
+                {!dropped && !oppOut && p.status === "done" && (
                   <span className="mp-done-pill">done</span>
                 )}
               </header>
@@ -250,8 +258,8 @@ export function MultiplayerGame() {
                     wordLength={oppCols}
                     maxGuesses={oppCap}
                     hideLetters
-                    typingRow={p.typingRow}
-                    typingFilled={p.typingFilled}
+                    typingRow={typingActive ? p.typingRow : undefined}
+                    typingFilled={typingActive ? p.typingFilled : undefined}
                   />
                 </div>
               )}

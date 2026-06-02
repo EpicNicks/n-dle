@@ -452,6 +452,36 @@
   letter-spacing: 0.06em;
   font-weight: 700;
 }
+.mp-left-pill {
+  flex-shrink: 0;
+  background: var(--mp-surface-2);
+  color: var(--mp-muted);
+  border: 1px solid var(--mp-border);
+  border-radius: 4px;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+.mp-opp.dropped {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+}
+.mp-opp.dropped .mp-opp-board {
+  opacity: 0.6;
+}
+
+/* opponent "currently typing" tiles: a clearly darker square, not the faint
+   border the solo board uses. Scoped with :not(...) so graded/revealed tiles
+   (correct/present/absent) keep their own colours and aren't greyed. */
+.mp-opp-board
+  .wordle-tile--filled:not(.wordle-tile--correct):not(
+    .wordle-tile--present
+  ):not(.wordle-tile--absent) {
+  background: #c7ccd1;
+  border-color: #a7adb3;
+}
 
 /* ---- standings ---- */
 .mp-standings {

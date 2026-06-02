@@ -50,8 +50,10 @@ export class RoomConnection {
     string,
     { rows: BoardRow[]; outcome: Outcome }
   >();
+  private lastSeen = new Map<string, number>(); // peerId -> last message epoch ms
   // guest-only:
   private hostConn: DataConnection | null = null;
+  private keepalive?: ReturnType<typeof setInterval>;
 
   /** Resolves with the room code once the peer is registered with the broker. */
   readonly ready: Promise<string>;
@@ -151,12 +153,25 @@ export class RoomConnection {
     this.peer.on("connection", (conn: DataConnection) => {
       conn.on("open", () => {
         this.conns.set(conn.peer, conn);
+        this.lastSeen.set(conn.peer, Date.now());
+        // The reliable drop signal: the underlying RTCPeerConnection's ICE
+        // state. PeerJS's 'close' event and conn.open often DON'T update on an
+        // ungraceful disconnect (closed tab, killed network), but ICE goes to
+        // disconnected/failed within a few seconds.
+        const pc = conn.peerConnection;
+        if (pc) {
+          pc.oniceconnectionstatechange = () => {
+            const s = pc.iceConnectionState;
+            if (s === "disconnected" || s === "failed" || s === "closed") {
+              this.handleDrop(conn.peer);
+            }
+          };
+        }
       });
-      conn.on("data", (raw: unknown) =>
-        this.onHostData(conn, raw as ClientMsg),
-      );
-      // Drop detection: PeerJS fires 'close' when a data channel tears down.
-      // A heartbeat (below) backstops the cases where 'close' is slow to fire.
+      conn.on("data", (raw: unknown) => {
+        this.lastSeen.set(conn.peer, Date.now());
+        this.onHostData(conn, raw as ClientMsg);
+      });
       conn.on("close", () => this.handleDrop(conn.peer));
       conn.on("error", () => this.handleDrop(conn.peer));
     });
@@ -227,6 +242,10 @@ export class RoomConnection {
       }
       case "horse:pickLength": {
         void this.horseDealWord(msg.length);
+        break;
+      }
+      case "ping": {
+        // liveness only — lastSeen was already stamped in the data handler
         break;
       }
     }
@@ -459,13 +478,16 @@ export class RoomConnection {
   // -------------------------------------------------------------------------
   private heartbeat?: ReturnType<typeof setInterval>;
   private startHeartbeat() {
-    // PeerJS connections expose `.open`; if a channel silently dies we catch it
-    // here even when 'close' doesn't fire promptly.
+    // Backstop for the ICE-state watcher: if we haven't heard from a peer in
+    // ~9s (they ping every 3s), treat them as gone. Catches cases where even
+    // ICE state doesn't transition promptly.
     this.heartbeat = setInterval(() => {
+      const now = Date.now();
       for (const [id, conn] of this.conns) {
-        if (!conn.open) this.handleDrop(id);
+        const stale = now - (this.lastSeen.get(id) ?? now) > 9000;
+        if (!conn.open || stale) this.handleDrop(id);
       }
-    }, 4000);
+    }, 3000);
   }
 
   private handleDrop(peerId: string) {
@@ -495,7 +517,13 @@ export class RoomConnection {
   private setupGuest(name: string) {
     const conn = this.peer.connect(this.state.hostId, { reliable: true });
     this.hostConn = conn;
-    conn.on("open", () => conn.send({ t: "join", name } satisfies ClientMsg));
+    conn.on("open", () => {
+      conn.send({ t: "join", name } satisfies ClientMsg);
+      // keepalive so the host can detect us going away even if ICE/close lag
+      this.keepalive = setInterval(() => {
+        if (conn.open) conn.send({ t: "ping" } satisfies ClientMsg);
+      }, 3000);
+    });
     conn.on("data", (raw: unknown) => this.onGuestData(raw as HostMsg));
     conn.on("close", () => {
       // host left -> room is gone
@@ -606,6 +634,7 @@ export class RoomConnection {
 
   leave() {
     if (this.heartbeat) clearInterval(this.heartbeat);
+    if (this.keepalive) clearInterval(this.keepalive);
     for (const c of this.conns.values()) c.close();
     this.hostConn?.close();
     this.peer.destroy();
@@ -634,11 +663,25 @@ export class RoomConnection {
     if (!p) return;
     const patterns = [...p.patterns];
     patterns[row] = pattern;
-    this.patchPlayer(id, { patterns, status: "playing", typingFilled: 0 });
+    // submitting clears the in-progress row and moves the cursor to the next one
+    this.patchPlayer(id, {
+      patterns,
+      status: "playing",
+      typingRow: patterns.length,
+      typingFilled: 0,
+    });
   }
 
-  private applyTyping(id: string, row: number, filled: number) {
-    this.patchPlayer(id, { typingRow: row, typingFilled: filled });
+  private applyTyping(id: string, _row: number, filled: number) {
+    const p = this.player(id);
+    if (!p) return;
+    // The row they're typing into is always the one after their submitted rows.
+    // Deriving it here (rather than trusting the sent row) keeps it correct even
+    // when the sender's optimistic row index lags the authoritative pattern count.
+    this.patchPlayer(id, {
+      typingRow: p.patterns.length,
+      typingFilled: filled,
+    });
   }
 
   private applyTimeAttackWord(id: string, solved: boolean) {

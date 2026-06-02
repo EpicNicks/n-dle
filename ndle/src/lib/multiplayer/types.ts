@@ -77,7 +77,8 @@ export type ClientMsg =
   | { t: "typing"; row: number; filled: number }
   | { t: "done"; rows: BoardRow[]; outcome: Outcome }
   | { t: "horse:pickLength"; length: number }
-  | { t: "ta:word"; solved: boolean };
+  | { t: "ta:word"; solved: boolean }
+  | { t: "ping" };
 
 export type HostMsg =
   | { t: "lobby"; state: RoomState }
